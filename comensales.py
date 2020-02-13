@@ -7,7 +7,7 @@ logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message
 semaforoComensal=threading.Semaphore(3)
 semaforoCocinero=threading.Semaphore(0)
 lockComensales=threading.Lock()
-comensales=15
+comensales=10
 
 class Cocinero(threading.Thread):
   def __init__(self):
