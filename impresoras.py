@@ -4,13 +4,14 @@ import logging
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
+semaforo=threading.Semaphore(3)
 class Impresora:
   def __init__(self, numero):
     self.numero = numero
 
   def imprimir(self, texto):
     # Simulamos un tiempo de impresión. No cambiar esta línea.
-    time.sleep(0.5)
+    time.sleep(1)
     logging.info(f'(Impresora {self.numero}) "{texto}"')
 
 class Computadora(threading.Thread):
@@ -21,11 +22,13 @@ class Computadora(threading.Thread):
   def run(self):
     # Tomo una impresora de la lista.
     # (Esta línea va a fallar si no quedan impresoras, agregar sincronización para que no pase)
+    semaforo.acquire() #bloquea el 3er thread para q termine haciendo el append y recien despues empieza el cuarto y no inmediatamente despues
     impresora = impresorasDisponibles.pop()
     # La utilizo.
     impresora.imprimir(self.texto)
     # La vuelvo a dejar en la lista para que la use otro.
     impresorasDisponibles.append(impresora)
+    semaforo.release()
 
 impresorasDisponibles = []
 for i in range(3):
