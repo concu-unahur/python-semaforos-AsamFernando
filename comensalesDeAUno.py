@@ -6,9 +6,7 @@ logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message
 
 semaforoComensal=threading.Semaphore(1)
 semaforoCocinero=threading.Semaphore(0)
-lockComensales=threading.Lock()
 platosDisponibles = 3
-comensales=25
 
 class Cocinero(threading.Thread):
   def __init__(self):
@@ -17,7 +15,7 @@ class Cocinero(threading.Thread):
 
   def run(self):
     global platosDisponibles
-    while comensales>0:
+    while True:
       semaforoCocinero.acquire()
       try:
         logging.info('Reponiendo los platos...')
@@ -25,8 +23,6 @@ class Cocinero(threading.Thread):
       finally:
         semaforoComensal.release()
 
-# semaforo para controlar la cantidad de platos correcta ya q el logging tarda mas que los comensales y la cantidad puede ser erronea
-# semaforo para q espere el comensal y despierte al cocinero
 
 class Comensal(threading.Thread):
   def __init__(self, numero):
@@ -35,27 +31,20 @@ class Comensal(threading.Thread):
 
   def run(self):
     global platosDisponibles
-    global comensales
-    semaforoComensal.acquire() # el 4 comensal tiene q entrar a comer pero si no hay platos tiene q esperar al cocinero
+    semaforoComensal.acquire()
     try:
-      if platosDisponibles>0: 
-        platosDisponibles -= 1 
-        logging.info(f'Que rico! Quedan {platosDisponibles} platos')
-      if comensales>0:  
-        comensales-=1
+      while platosDisponibles==0:    # se pone el while para q el comensal bloqueado q desperto al cocinero 
+        semaforoCocinero.release()   # pregunte si hay platos x q podria desbloquearse cuando es cero y quedan platos negativos
+        semaforoComensal.acquire()
+      platosDisponibles-=1
+      logging.info(f'Que rico! Quedan {platosDisponibles} platos')
     finally:
-      if platosDisponibles==0 or comensales==0:
-        semaforoCocinero.release()
-      else:
-        semaforoComensal.release()
+      semaforoComensal.release()
 
-
-
-        
 
 Cocinero().start()
 
 
-for i in range(comensales):
+for i in range(20):
   Comensal(i).start()
 
